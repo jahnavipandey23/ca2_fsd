@@ -85,5 +85,41 @@ router.get("/", async (req, res, next) => {
     }
 });
 
+router.patch("/:id", async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { reviewStatus } = req.body;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid feedback ID"
+            });
+        }
+        if (!["Pending", "Reviewed"].includes(reviewStatus)) {
+            return res.status(400).json({
+                success: false,
+                message: "reviewStatus must be Pending or Reviewed"
+            });
+        }
+        const feedback = await Feedback.findByIdAndUpdate(
+            id,
+            { $set: { reviewStatus } },
+            { new: true, runValidators: true }
+        );
+        if (!feedback) {
+            return res.status(404).json({
+                success: false,
+                message: "Feedback record not found"
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Feedback status updated successfully",
+            feedback
+        });
+    } catch (error) {
+        next(error);
+    }
+});
 
 module.exports = router;
